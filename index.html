@@ -657,17 +657,23 @@
     <input type="text" id="newProjectName" placeholder="اسم المشروع الجديد">
     <button onclick="addProject()">إضافة مشروع</button>
     
-    <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
-        <label for="projectSelector">اختر المشروع:</label>
-        <select id="projectSelector" onchange="switchProject()" style="flex-grow: 1;"></select>
-        <button onclick="deleteProject()" class="delete" style="width: auto;">حذف المشروع</button>
+    <div style="margin-top: 15px;">
+    <label for="projectSelector" style="display:block; margin-bottom:5px; font-weight:bold; color:#6dd5ed;">
+        📂 اختر المشروع
+    </label>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <select id="projectSelector" onchange="switchProject()" style="flex-grow:1;"></select>
+        <button onclick="deleteProject()" class="delete" style="width:auto;">حذف المشروع</button>
     </div>
+</div>
+
     
     <div id="mainContent" style="display:none;">
         <hr style="margin: 30px 0; border: 1px solid rgba(255,255,255,0.1);">
         <h3>➕ إضافة عامل</h3>
         <input type="text" id="name" placeholder="اسم العامل">
-        <input type="text" id="phone" placeholder="رقم الهاتف">
+       <input type="tel" id="phone" placeholder="رقم الهاتف" inputmode="numeric" pattern="[0-9]*">
+
         <input type="number" id="wage" placeholder="الأجرة اليومية">
         <label for="imageFile">صورة العامل:</label>
         <input type="file" id="imageFile" accept="image/*">
@@ -688,7 +694,7 @@
         </table>
 
         <div style="margin-top: 20px;">
-            <h3>📝 تسجيل الحضور يدوي</h3>
+            <h3>📝 تسجيل الحضور </h3>
             <input type="text" id="attendanceWorkerName" placeholder="اسم العامل">
             <div class="inline-buttons">
                 <button onclick="markAttendanceByName('day')">إضافة يوم</button>
@@ -697,7 +703,7 @@
         </div>
 
         <div style="margin-top: 20px;">
-            <h3>💰 تسجيل دفع يدوي</h3>
+            <h3>💰 تسجيل دفع </h3>
             <input type="text" id="payWorkerName" placeholder="اسم العامل">
             <input type="number" id="payAmount" placeholder="المبلغ المراد دفعه">
             <button onclick="payByWorkerName()">دفع</button>
@@ -1404,3 +1410,4 @@
 </body>
 
 </html>
+
