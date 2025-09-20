@@ -554,6 +554,48 @@
             padding: 10px 15px; /* تقليل حجم حشو أزرار تسجيل الدخول */
         }
     }
+   /* تحسين العرض على الهواتف */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px 10px;
+        margin-top: 40px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    h2, h3 {
+        font-size: 18px;
+    }
+
+    input, select, textarea, button {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+    }
+
+    /* يخلي الجدول يلف يمين ويسار */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    th, td {
+        font-size: 0.85rem;
+        padding: 6px;
+    }
+
+    /* يخلي الأزرار جنب بعض */
+    .inline-buttons {
+        flex-direction: column;
+    }
+
+    .inline-buttons button {
+        width: 100%;
+    }
+}
+
 </style>
 </head>
 
@@ -611,7 +653,7 @@
         <button id="logout-btn" class="btn-secondary" style="margin: 0; width: auto;">تسجيل الخروج</button>
     </div>
 
-    <h2>🏗️ إدارة المشاريع</h2>
+    <h2>🏗️ إدارة العمال</h2>
     <input type="text" id="newProjectName" placeholder="اسم المشروع الجديد">
     <button onclick="addProject()">إضافة مشروع</button>
     
@@ -1360,4 +1402,5 @@
 </script>
 
 </body>
+
 </html>
