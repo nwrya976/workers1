@@ -657,15 +657,17 @@
     <input type="text" id="newProjectName" placeholder="اسم المشروع الجديد">
     <button onclick="addProject()">إضافة مشروع</button>
     
-    <div style="margin-top: 15px;">
-    <label for="projectSelector" style="display:block; margin-bottom:5px; font-weight:bold; color:#6dd5ed;">
-        📂 اختر المشروع
-    </label>
-    <div style="display:flex; gap:10px; align-items:center;">
-        <select id="projectSelector" onchange="switchProject()" style="flex-grow:1;"></select>
-        <button onclick="deleteProject()" class="delete" style="width:auto;">حذف</button>
-    </div>
+ <div style="margin-top: 15px;">
+  <label for="projectSelector" 
+         style="display:block; margin-bottom:5px; font-weight:bold; color:#6dd5ed; text-align:center; font-size:18px;">
+      📂 اختر المشروع
+  </label>
+  <div style="display:flex; gap:10px; align-items:center;">
+      <select id="projectSelector" onchange="switchProject()" style="flex-grow:1;"></select>
+      <button onclick="deleteProject()" class="delete" style="width:auto;">حذف</button>
+  </div>
 </div>
+
 
     
     <div id="mainContent" style="display:none;">
@@ -1411,6 +1413,7 @@
 </body>
 
 </html>
+
 
 
 
