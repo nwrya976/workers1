@@ -960,7 +960,7 @@
 </div>
 
 <script>
-    // Firebase Configuration
+    // Firebase Configuration - قم بتحديث هذا بإعدادات مشروعك
     const firebaseConfig = {
         apiKey: "AIzaSyDye4DgqNvEwwWDYf1yjW5yfJc14p1LmiU",
         authDomain: "your-project-10fbe.firebaseapp.com",
@@ -1005,8 +1005,16 @@
     
     let isLoginMode = true;
 
-    // Check URL parameters for shared project
+    // التحقق من رابط المشاركة عند تحميل الصفحة
     window.addEventListener('load', function() {
+        if (handleShareLink()) {
+            // إذا كان هناك رابط مشاركة، لا تطلب تسجيل دخول
+            return;
+        }
+    });
+
+    // Function to handle shared project links - محدثة للعمل بدون مصادقة
+    function handleShareLink() {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedProjectId = urlParams.get('project');
         const sharedUserId = urlParams.get('user');
@@ -1014,16 +1022,21 @@
         if (sharedProjectId && sharedUserId) {
             isViewOnly = true;
             loadSharedProject(sharedUserId, sharedProjectId);
+            return true;
         }
-    });
+        return false;
+    }
     
-    // Check for user login state
+    // Check for user login state - مع دعم وضع المشاركة
     auth.onAuthStateChanged(user => {
-        if (user && !isViewOnly) {
+        // لا تفعل شيء إذا كان في وضع المشاركة
+        if (isViewOnly) return;
+        
+        if (user) {
             currentUser = user;
             showMainApp();
             loadProjects();
-        } else if (!isViewOnly) {
+        } else {
             currentUser = null;
             hideAllPages();
             authPage.classList.remove('hidden');
@@ -1043,10 +1056,16 @@
     }
 
     function goBackToProjects() {
+        if (isViewOnly) {
+            window.close();
+            return;
+        }
         showProjectsList();
     }
 
     function toggleAddProject() {
+        if (isViewOnly) return;
+        
         const section = document.getElementById('addProjectSection');
         const btn = document.getElementById('showAddProjectBtn');
         
@@ -1063,25 +1082,35 @@
 
     // Message functions
     function showSuccess(message) {
-        successMsg.textContent = message;
-        successMsg.style.display = 'block';
-        errorMsg.style.display = 'none';
+        if (successMsg) {
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+        }
+        if (errorMsg) {
+            errorMsg.style.display = 'none';
+        }
         setTimeout(() => {
-            successMsg.style.display = 'none';
+            if (successMsg) successMsg.style.display = 'none';
         }, 3000);
     }
 
     function showError(message) {
-        errorMsg.textContent = message;
-        errorMsg.style.display = 'block';
-        successMsg.style.display = 'none';
+        if (errorMsg) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+        if (successMsg) {
+            successMsg.style.display = 'none';
+        }
         setTimeout(() => {
-            errorMsg.style.display = 'none';
+            if (errorMsg) errorMsg.style.display = 'none';
         }, 3000);
     }
     
     // Auth functions
     function toggleMode() {
+        if (isViewOnly) return;
+        
         isLoginMode = !isLoginMode;
         if (isLoginMode) {
             formTitle.textContent = 'تسجيل الدخول';
@@ -1109,6 +1138,8 @@
     }
 
     function login(email, password) {
+        if (isViewOnly) return;
+        
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 showSuccess('تم تسجيل الدخول بنجاح!');
@@ -1121,6 +1152,8 @@
     }
 
     function signup(email, password, confirmPassword) {
+        if (isViewOnly) return;
+        
         if (password !== confirmPassword) {
             showError('كلمات المرور غير متطابقة');
             return false;
@@ -1163,14 +1196,18 @@
     function showMainApp() {
         hideAllPages();
         mainPage.classList.remove('hidden');
-        if (currentUser) {
+        if (currentUser && userDisplayName && userDisplayEmail) {
             userDisplayName.textContent = currentUser.displayName || currentUser.email.split('@')[0];
             userDisplayEmail.textContent = currentUser.email;
         }
-        showProjectsList();
+        if (!isViewOnly) {
+            showProjectsList();
+        }
     }
 
     function logout() {
+        if (isViewOnly) return;
+        
         auth.signOut()
             .then(() => {
                 showSuccess('تم تسجيل الخروج بنجاح!');
@@ -1182,6 +1219,8 @@
     }
 
     function resetPassword() {
+        if (isViewOnly) return;
+        
         const email = document.getElementById("email").value;
         if (email) {
             auth.sendPasswordResetEmail(email)
@@ -1205,7 +1244,7 @@
 
     // Load projects from Firebase
     function loadProjects() {
-        if (!currentUser) return;
+        if (!currentUser || isViewOnly) return;
         const projectsRef = database.ref(`workmanProjects/${currentUser.uid}`);
         
         projectsRef.on('value', snapshot => {
@@ -1221,7 +1260,7 @@
         });
     }
 
-    // Load shared project
+    // Load shared project - للعمل بدون مصادقة
     function loadSharedProject(userId, projectId) {
         const projectRef = database.ref(`workmanProjects/${userId}/${projectId}`);
         
@@ -1230,20 +1269,22 @@
             if (data) {
                 currentProject = { id: projectId, ...data };
                 
-                // Show shared project view
+                // إظهار المشروع المشترك
                 hideAllPages();
                 mainPage.classList.remove('hidden');
                 mainPage.classList.add('view-only');
                 
-                // Hide user header and show project directly
-                document.querySelector('.user-header').style.display = 'none';
+                // إخفاء header المستخدم وإظهار المشروع مباشرة
+                const userHeader = document.querySelector('.user-header');
+                if (userHeader) userHeader.style.display = 'none';
+                
                 projectsListView.classList.add('hidden');
                 projectDetailsView.classList.remove('hidden');
                 
-                // Update project title
+                // تحديث عنوان المشروع
                 document.getElementById('currentProjectTitle').textContent = `مشاهدة مشروع: ${currentProject.name}`;
                 
-                // Show only reports
+                // إظهار التقارير فقط
                 showAllReports();
             } else {
                 alert('المشروع المطلوب غير موجود أو تم حذفه.');
@@ -1257,7 +1298,7 @@
     // Save project data to Firebase
     function saveProject(projectData) {
         return new Promise((resolve, reject) => {
-            if (!currentUser) {
+            if (!currentUser || isViewOnly) {
                 showError("خطأ: لم يتم تسجيل الدخول.");
                 return reject("No user logged in.");
             }
@@ -1265,8 +1306,9 @@
             
             if (projectData.id) {
                 const projectId = projectData.id;
-                delete projectData.id;
-                projectsRef.child(projectId).update(projectData).then(() => {
+                const dataToSave = { ...projectData };
+                delete dataToSave.id;
+                projectsRef.child(projectId).set(dataToSave).then(() => {
                     showSuccess("تم تحديث المشروع بنجاح!");
                     resolve();
                 }).catch(error => {
@@ -1293,6 +1335,8 @@
 
     // Project Management Functions
     function addProject() {
+        if (isViewOnly) return;
+        
         let projectName = document.getElementById("newProjectName").value.trim();
         if (projectName) {
             const newProject = {
@@ -1301,7 +1345,7 @@
             };
             saveProject(newProject).then(() => {
                 document.getElementById("newProjectName").value = "";
-                toggleAddProject(); // Hide the add form
+                toggleAddProject(); // إخفاء نموذج الإضافة
             });
         } else {
             alert("يرجى إدخال اسم المشروع.");
@@ -1309,7 +1353,11 @@
     }
 
     function updateProjectList() {
+        if (isViewOnly) return;
+        
         const listDiv = document.getElementById("projectsList");
+        if (!listDiv) return;
+        
         listDiv.innerHTML = "";
 
         if (projects.length === 0) {
@@ -1348,6 +1396,8 @@
 
     // Open project details
     function openProject(projectId) {
+        if (isViewOnly) return;
+        
         currentProject = projects.find(p => p.id === projectId);
         if (currentProject) {
             document.getElementById('currentProjectTitle').textContent = `مشروع: ${currentProject.name}`;
@@ -1358,7 +1408,7 @@
 
     // Delete current project
     function deleteCurrentProject() {
-        if (!currentProject) {
+        if (!currentProject || isViewOnly) {
             alert("لا يوجد مشروع محدد لحذفه.");
             return;
         }
@@ -1376,9 +1426,9 @@
         }
     }
 
-    // Share project
+    // Share project - محدثة للعمل بدون مصادقة
     function shareProject() {
-        if (!currentProject) {
+        if (!currentProject || isViewOnly) {
             alert("لا يوجد مشروع محدد للمشاركة.");
             return;
         }
@@ -1396,7 +1446,7 @@
         const shareLink = document.getElementById('shareLink');
         const text = shareLink.textContent;
         
-        // Create temporary textarea element
+        // إنشاء عنصر textarea مؤقت
         const textarea = document.createElement('textarea');
         textarea.value = text;
         document.body.appendChild(textarea);
@@ -1404,7 +1454,7 @@
         document.execCommand('copy');
         document.body.removeChild(textarea);
         
-        // Show feedback
+        // إظهار رسالة تأكيد
         alert('تم نسخ الرابط! يمكنك الآن مشاركته مع الآخرين.');
     }
 
@@ -1414,25 +1464,34 @@
     
     // Attendance Functions
     function markAttendanceByName(type) {
+        if (isViewOnly) return;
+        
         let nameToFind = document.getElementById("attendanceWorkerName").value.trim();
-        let workers = getWorkers();
-
+        
         if (!nameToFind) {
             alert("يرجى إدخال اسم العامل.");
             return;
         }
 
+        if (!currentProject) {
+            alert("يرجى اختيار مشروع أولاً.");
+            return;
+        }
+
+        let workers = getWorkers();
         let workerFound = false;
+        
         workers.forEach(w => {
             if (w.name === nameToFind) {
                 let today = new Date().toLocaleDateString("ar-EG");
                 let value = (type === "day") ? 1 : 0.5;
-                w.days += value;
+                w.days = (w.days || 0) + value;
                 if (!w.attendance) w.attendance = [];
                 w.attendance.push({ date: today, value: value });
                 workerFound = true;
             }
         });
+        
         if (workerFound) {
             currentProject.workers = workers;
             saveProject(currentProject).then(() => {
@@ -1446,7 +1505,7 @@
 
     // Worker Management Functions
     function addWorker() {
-        if (!currentProject) {
+        if (!currentProject || isViewOnly) {
             alert("يرجى اختيار مشروع أولاً.");
             return;
         }
@@ -1498,6 +1557,8 @@
     }
     
     function resetInputs() {
+        if (isViewOnly) return;
+        
         document.getElementById("name").value = "";
         document.getElementById("phone").value = "";
         document.getElementById("wage").value = "";
@@ -1505,12 +1566,19 @@
     }
 
     function payByWorkerName() {
+        if (isViewOnly) return;
+        
         let nameToFind = document.getElementById("payWorkerName").value.trim();
         let amountToPay = parseFloat(document.getElementById("payAmount").value);
         let workers = getWorkers();
         
         if (!nameToFind || !amountToPay || isNaN(amountToPay) || amountToPay <= 0) {
             alert("يرجى إدخال اسم العامل والمبلغ الصحيح.");
+            return;
+        }
+
+        if (!currentProject) {
+            alert("يرجى اختيار مشروع أولاً.");
             return;
         }
 
@@ -1525,6 +1593,7 @@
                 workerFound = true;
             }
         });
+        
         if (workerFound) {
             currentProject.workers = workers;
             saveProject(currentProject).then(() => {
@@ -1541,6 +1610,8 @@
         let historyDiv = document.getElementById("paymentHistoryReport");
         let nameToFind = document.getElementById("historyWorkerName").value.trim();
         let workers = getWorkers();
+        
+        if (!historyDiv) return;
         historyDiv.innerHTML = "";
 
         let worker = workers.find(w => w.name === nameToFind);
@@ -1561,6 +1632,8 @@
     }
 
     function deleteWorker(index) {
+        if (isViewOnly) return;
+        
         let workers = getWorkers();
         if (confirm("هل أنت متأكد من حذف هذا العامل؟")) {
             workers.splice(index, 1);
@@ -1574,16 +1647,22 @@
     function updateTable() {
         let table = document.getElementById("workerTable");
         let workers = getWorkers();
+        
+        if (!table) return;
         table.innerHTML = "";
+        
         workers.forEach((w, i) => {
-            let totalDue = w.days * w.wage;
+            let totalDue = (w.days || 0) * (w.wage || 0);
+            let totalPaid = (w.payments || []).reduce((sum, pay) => sum + pay.amount, 0);
+            let remaining = totalDue - totalPaid;
+            
             let row = `<tr>
                 <td>${w.name}</td>
                 <td>${formatNumber(w.wage)}</td>
-                <td>${w.days}</td>
+                <td>${w.days || 0}</td>
                 <td>${formatNumber(totalDue)}</td>
                 <td class="action-buttons">
-                    <button onclick="deleteWorker(${i})" class="delete">حذف</button>
+                    ${!isViewOnly ? `<button onclick="deleteWorker(${i})" class="delete">حذف</button>` : ''}
                 </td>
             </tr>`;
             table.innerHTML += row;
@@ -1592,13 +1671,16 @@
 
     function showReport() {
         let reportDiv = document.getElementById("report");
-        reportDiv.innerHTML = "";
         let nameToFind = document.getElementById("reportWorkerName").value.trim();
         let workers = getWorkers();
+        
+        if (!reportDiv) return;
+        reportDiv.innerHTML = "";
+        
         if (nameToFind) {
             let worker = workers.find(w => w.name === nameToFind);
             if (worker) {
-                let totalDue = worker.days * worker.wage;
+                let totalDue = (worker.days || 0) * (worker.wage || 0);
                 let totalPaid = (worker.payments || []).reduce((sum, p) => sum + p.amount, 0);
                 let remaining = totalDue - totalPaid;
                 let attList = (worker.attendance || []).map(a => `${a.date} (${a.value} يوم)`).join("<br>");
@@ -1610,7 +1692,7 @@
                     <br>
                     📞 ${worker.phone}<br>
                     💰 أجرة يومية: ${formatNumber(worker.wage)}<br>
-                    📅 عدد الأيام: ${worker.days}<br>
+                    📅 عدد الأيام: ${worker.days || 0}<br>
                     🧾 الراتب المستحق: ${formatNumber(totalDue)}<br>
                     💵 المدفوع: ${formatNumber(totalPaid)}<br>
                     ⚖️ الراتب المتبقي: ${formatNumber(remaining)}<br>
@@ -1628,6 +1710,8 @@
     function showAllReports() {
         let reportDiv = document.getElementById("report");
         let workers = getWorkers();
+        
+        if (!reportDiv) return;
         reportDiv.innerHTML = "";
         
         if (workers.length === 0) {
@@ -1636,7 +1720,7 @@
         }
 
         workers.forEach((w, i) => {
-            let totalDue = w.days * w.wage;
+            let totalDue = (w.days || 0) * (w.wage || 0);
             let totalPaid = (w.payments || []).reduce((sum, p) => sum + p.amount, 0);
             let remaining = totalDue - totalPaid;
             let attList = (w.attendance || []).map(a => `${a.date} (${a.value} يوم)`).join("<br>");
@@ -1649,7 +1733,7 @@
                 <br>
                 📞 ${w.phone}<br>
                 💰 أجرة يومية: ${formatNumber(w.wage)}<br>
-                📅 عدد الأيام: ${w.days}<br>
+                📅 عدد الأيام: ${w.days || 0}<br>
                 🧾 الراتب المستحق: ${formatNumber(totalDue)}<br>
                 💵 المدفوع: ${formatNumber(totalPaid)}<br>
                 ⚖️ الراتب المتبقي: ${formatNumber(remaining)}<br>
@@ -1663,13 +1747,17 @@
     function openImage(imageSrc) {
         let modal = document.getElementById("imageModal");
         let modalImg = document.getElementById("modalImage");
-        modal.style.display = "block";
-        modalImg.src = imageSrc;
+        if (modal && modalImg) {
+            modal.style.display = "block";
+            modalImg.src = imageSrc;
+        }
     }
 
     function closeImage() {
         let modal = document.getElementById("imageModal");
-        modal.style.display = "none";
+        if (modal) {
+            modal.style.display = "none";
+        }
     }
 
     // Auth Event Listeners
